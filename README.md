@@ -38,7 +38,7 @@ Then open [http://127.0.0.1:5757](http://127.0.0.1:5757). The launcher additiona
 1. Paste a media URL and select **Fetch**.
 2. Choose a format and quality.
 3. Select **Add to queue**. You can fetch and queue another item while earlier downloads are running.
-4. Follow progress and results in the sidebar's **Queue** tab. Completed items can also be saved from the browser.
+4. Follow progress and results in the sidebar's **Queue** tab. **Clear history** removes completed, failed, and cancelled entries without deleting downloaded files or interrupting active downloads. Completed items can also be saved from the browser.
 
 New installs default to **Browser download**. In the sidebar's **Save folder** tab, choose either **Browser download** or **App save folder**. Browser mode sends completed files to the browser's native download manager, where download progress and save-location settings are handled. Enable **Ask where to save each file** in browser settings to choose a destination. Use **Save a copy via browser** in Recent downloads to retry or save another copy. **App save folder** mode saves directly to the selected folder, which defaults to `Downloads/` next to the app.
 

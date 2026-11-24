@@ -90,7 +90,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,va
 .side-b{padding:16px}
 .job-section{display:grid;gap:8px}
 .job-section+.job-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.job-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .job-section h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--sub)}
+.job-clear{height:28px;padding:0 9px;font-size:11px}
+.job-clear[hidden]{display:none}
 .jobs{display:grid;gap:10px;max-height:min(34vh,320px);overflow-y:auto}
 .job{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--panel)}
 .job-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
@@ -205,7 +208,10 @@ footer{max-width:1160px;margin:0 auto;padding:0 24px 28px;font-size:12px;color:v
       <div class="jobs" id="activeJobs"><div class="empty"><b>No downloads in the queue</b>Fetch a link and add it here.</div></div>
     </section>
     <section class="job-section" aria-labelledby="recentJobsHeading">
-      <h3 id="recentJobsHeading">Recent downloads</h3>
+      <div class="job-section-heading">
+        <h3 id="recentJobsHeading">Recent downloads</h3>
+        <button class="btn job-clear" id="clearRecent" type="button" hidden>Clear history</button>
+      </div>
       <div class="jobs" id="recent"><div class="empty"><b>No recent downloads</b>Completed, failed, and cancelled downloads will appear here.</div></div>
     </section>
     <div class="msg err" id="queueError"></div>
@@ -392,15 +398,24 @@ function renderJob(job){const labels={queued:"Queued",running:"Downloading",canc
 function renderList(list,jobs,emptyHtml){list.replaceChildren();
  if(!jobs.length){list.innerHTML=emptyHtml;return}
  jobs.forEach(job=>list.append(renderJob(job)))}
+let clearHistoryBusy=false;
 function renderJobs(jobs){const running=jobs.filter(job=>job.state==="running"||job.state==="cancelling");
  const queued=jobs.filter(job=>job.state==="queued").reverse(),active=[...running,...queued];
  const recent=jobs.filter(job=>job.state==="done"||job.state==="error"||job.state==="cancelled");
  $("queueCount").textContent=String(active.length);
+ $("clearRecent").hidden=recent.length===0;$("clearRecent").disabled=clearHistoryBusy;
  renderList($("activeJobs"),active,'<div class="empty"><b>No downloads in the queue</b>Fetch a link and add it here.</div>');
  renderList($("recent"),recent,'<div class="empty"><b>No recent downloads</b>Completed, failed, and cancelled downloads will appear here.</div>')}
 async function loadJobs(){try{const r=await fetch("/api/jobs");if(!r.ok)throw new Error("Could not load the queue.");
   const jobs=(await r.json()).jobs||[];startReadyBrowserDownloads(jobs);renderJobs(jobs);$("queueError").textContent="";
  }catch(e){$("queueError").textContent=e.message||"Could not load the queue."}}
+$("clearRecent").onclick=async()=>{if(clearHistoryBusy||!window.confirm("Clear recent download history? Downloaded files will not be deleted."))return;
+ clearHistoryBusy=true;$("clearRecent").disabled=true;
+ try{const r=await fetch("/api/jobs/clear-recent",{method:"POST"}),d=await r.json();
+  if(!r.ok)throw new Error(d.error||"Could not clear recent downloads.");
+  browserDownloadRequests.clear();await loadJobs()
+ }catch(e){$("queueError").textContent=e.message||"Could not clear recent downloads."}
+ finally{clearHistoryBusy=false;$("clearRecent").disabled=false}};
 loadJobs();setInterval(loadJobs,1000);
 
 // save folder

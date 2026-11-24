@@ -403,6 +403,20 @@ def recent_jobs():
     return jsonify(jobs=[{k: v for k, v in job.items() if k != "file"} for job in recent])
 
 
+@app.post("/api/jobs/clear-recent")
+def clear_recent_jobs():
+    terminal_states = ("done", "error", "cancelled")
+    with jobs_lock:
+        cleared = [jid for jid in job_order
+                   if jid in jobs and jobs[jid].get("state") in terminal_states]
+        for jid in cleared:
+            jobs.pop(jid, None)
+            job_cancel_events.pop(jid, None)
+        if cleared:
+            job_order[:] = [jid for jid in job_order if jid in jobs]
+    return jsonify(cleared=len(cleared))
+
+
 @app.get("/api/progress/<jid>")
 def progress(jid):
     with jobs_lock:
