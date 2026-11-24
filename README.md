@@ -10,7 +10,7 @@ DevLoad is a local video and audio downloader with a Windows launcher, a browser
 - Change the download folder from the **Save folder** sidebar tab.
 - Keep the launcher in the Windows system tray while DevLoad runs.
 - Restart the launcher and its local server from either the launcher window or tray menu.
-- Use yt-dlp-supported sources, including TikTok, YouTube, Facebook, and Instagram.
+- Use yt-dlp-supported sources, including Twitch clips, TikTok, YouTube, Facebook, and Instagram.
 
 ## Quick start on Windows
 

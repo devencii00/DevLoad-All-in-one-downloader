@@ -3,8 +3,8 @@
 DevLoad - video and audio downloader
 Author: devenci.cd
 
-TikTok, YouTube (videos + Shorts), Facebook (videos + Reels), Instagram (Reels + posts)
-and anything else yt-dlp can read.
+Twitch clips, TikTok, YouTube (videos + Shorts), Facebook (videos + Reels),
+Instagram (Reels + posts), and anything else yt-dlp can read.
 Downloads are queued and processed one at a time; the page shows recent-job progress.
 
 Setup:   pip install flask yt-dlp imageio-ffmpeg     (ffmpeg engine comes with imageio-ffmpeg)
@@ -111,6 +111,7 @@ PLATFORMS = [
     ("YouTube", r"(youtube\.com|youtu\.be)"),
     ("Facebook", r"(facebook\.com|fb\.watch|fb\.com)"),
     ("Instagram", r"(instagram\.com|instagr\.am)"),
+    ("Twitch", r"(?:^|//)(?:www\.)?(?:clips\.)?twitch\.tv(?:[/:?#]|$)"),
 ]
 
 

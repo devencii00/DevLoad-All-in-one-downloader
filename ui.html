@@ -54,6 +54,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,va
 .platform-chip.active{transform:translateY(-1px)}
 .platform-chip.active[data-platform="facebook"]{background:#1877f2;border-color:#1877f2;color:#fff}
 .platform-chip.active[data-platform="youtube"]{background:#ff0033;border-color:#ff0033;color:#fff}
+.platform-chip.active[data-platform="twitch"]{background:#9146ff;border-color:#9146ff;color:#fff}
 .platform-chip.active[data-platform="tiktok"]{background:#111;border-color:#111;color:#fff}
 .platform-chip.active[data-platform="instagram"]{background:linear-gradient(120deg,#833ab4,#e1306c,#f77737);border-color:#d62976;color:#fff}
 .platform-chip.active[data-platform="other"]{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -117,6 +118,9 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,va
 .empty b{display:block;color:var(--text);margin-bottom:2px}
 .confirm-dialog{width:min(420px,calc(100% - 32px));padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
 .confirm-dialog::backdrop{background:rgba(10,12,30,.55);backdrop-filter:blur(3px)}
+.modal-overlay{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,12,30,.55);backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal-card{width:min(420px,100%);border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
 .dialog-b{padding:22px}
 .dialog-b h2{margin:0;font-size:16px}
 .dialog-b p{margin:10px 0 0;color:var(--sub);font-size:13px;overflow-wrap:anywhere}
@@ -174,6 +178,10 @@ footer{max-width:1160px;margin:0 auto;padding:0 24px 28px;font-size:12px;color:v
         <span class="platform-chip" data-platform="instagram" role="listitem">
           <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.8" r=".7" fill="currentColor" stroke="none"/></svg>
           <span>Instagram</span>
+        </span>
+        <span class="platform-chip" data-platform="twitch" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h17v12l-5 5h-4l-3 3v-3H4V3zm2 2v13h4v2l2-2h4l3-3V5H6z"/><path d="M11 8v5m5-5v5"/></svg>
+          <span>Twitch</span>
         </span>
         <span class="platform-chip" data-platform="other" role="listitem">
           <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
@@ -242,6 +250,20 @@ footer{max-width:1160px;margin:0 auto;padding:0 24px 28px;font-size:12px;color:v
 </div>
 <footer>By devenci.cd, 2026. Only download content you own or have permission to save.</footer>
 
+<div class="modal-overlay" id="clearHistoryModal" aria-hidden="true">
+  <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clearHistoryHeading" aria-describedby="clearHistoryDescription">
+    <div class="dialog-b">
+      <h2 id="clearHistoryHeading">Clear recent history?</h2>
+      <p id="clearHistoryDescription">This removes completed, failed, and cancelled downloads from Recent downloads. Downloaded files will not be deleted, and active downloads will continue.</p>
+      <div class="dialog-error" id="clearHistoryError" role="alert"></div>
+      <div class="dialog-actions">
+        <button class="btn" id="keepHistory" type="button">Keep history</button>
+        <button class="btn danger" id="confirmClearHistory" type="button">Clear history</button>
+      </div>
+    </div>
+  </section>
+</div>
+
 <dialog class="confirm-dialog" id="cancelDialog" aria-labelledby="cancelHeading">
   <div class="dialog-b">
     <h2 id="cancelHeading">Cancel this download?</h2>
@@ -302,7 +324,8 @@ $("queueTab").onclick=()=>setSidePanel("queue");$("folderTab").onclick=()=>setSi
 
 // platform detection
 const PL=[["TikTok",/tiktok\.com/i],["YouTube Shorts",/youtube\.com\/shorts\//i],["YouTube",/(youtube\.com|youtu\.be)/i],
- ["Facebook",/(facebook\.com|fb\.watch|fb\.com)/i],["Instagram",/(instagram\.com|instagr\.am)/i]];
+ ["Facebook",/(facebook\.com|fb\.watch|fb\.com)/i],["Instagram",/(instagram\.com|instagr\.am)/i],
+ ["Twitch",/(?:^|\/\/)(?:www\.)?(?:clips\.)?twitch\.tv(?:[/:?#]|$)/i]];
 const detect=u=>(PL.find(p=>p[1].test(u))||["Other"])[0];
 $("url").addEventListener("input",()=>{const u=$("url").value.trim();
  if(u!==fetchedUrl){fetchedUrl="";thumbnail="";$("panel").classList.add("hidden")}
@@ -310,7 +333,7 @@ $("url").addEventListener("input",()=>{const u=$("url").value.trim();
  else if(/^https?:\/\//i.test(u)){setDetectedPlatform(detect(u));$("hint").textContent="Platform highlighted below. Select Fetch to continue."}
  else{setDetectedPlatform("");$("hint").textContent="Links must start with http:// or https://"}});
 function setDetectedPlatform(platform){const selected=platform==="YouTube"||platform==="YouTube Shorts"?"youtube":
- platform==="Facebook"?"facebook":platform==="TikTok"?"tiktok":platform==="Instagram"?"instagram":platform?"other":"";
+ platform==="Facebook"?"facebook":platform==="TikTok"?"tiktok":platform==="Instagram"?"instagram":platform==="Twitch"?"twitch":platform?"other":"";
  document.querySelectorAll(".platform-chip").forEach(chip=>{const active=chip.dataset.platform===selected;
   chip.classList.toggle("active",active);if(active)chip.setAttribute("aria-current","true");else chip.removeAttribute("aria-current")})}
 $("url").addEventListener("keydown",e=>{if(e.key==="Enter")$("fetch").click()});
@@ -399,6 +422,18 @@ function renderList(list,jobs,emptyHtml){list.replaceChildren();
  if(!jobs.length){list.innerHTML=emptyHtml;return}
  jobs.forEach(job=>list.append(renderJob(job)))}
 let clearHistoryBusy=false;
+function closeClearHistoryModal(){$("clearHistoryModal").classList.remove("open");$("clearHistoryModal").setAttribute("aria-hidden","true");$("clearRecent").focus()}
+$("clearRecent").onclick=()=>{if(clearHistoryBusy)return;$("clearHistoryError").textContent="";$("clearHistoryModal").classList.add("open");$("clearHistoryModal").setAttribute("aria-hidden","false");$("keepHistory").focus()};
+$("keepHistory").onclick=closeClearHistoryModal;
+$("clearHistoryModal").addEventListener("click",e=>{if(!clearHistoryBusy&&e.target===$("clearHistoryModal"))closeClearHistoryModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("clearHistoryModal").classList.contains("open")){e.preventDefault();if(!clearHistoryBusy)closeClearHistoryModal()}});
+ $("confirmClearHistory").onclick=async()=>{if(clearHistoryBusy)return;
+  clearHistoryBusy=true;$("confirmClearHistory").disabled=true;$("keepHistory").disabled=true;$("clearHistoryError").textContent="";
+  try{const r=await fetch("/api/jobs/clear-recent",{method:"POST"}),d=await r.json();
+   if(!r.ok)throw new Error(d.error||"Could not clear recent downloads.");
+   browserDownloadRequests.clear();closeClearHistoryModal();await loadJobs()
+  }catch(e){$("clearHistoryError").textContent=e.message||"Could not clear recent downloads."}
+  finally{clearHistoryBusy=false;$("confirmClearHistory").disabled=false;$("keepHistory").disabled=false}};
 function renderJobs(jobs){const running=jobs.filter(job=>job.state==="running"||job.state==="cancelling");
  const queued=jobs.filter(job=>job.state==="queued").reverse(),active=[...running,...queued];
  const recent=jobs.filter(job=>job.state==="done"||job.state==="error"||job.state==="cancelled");
@@ -409,13 +444,6 @@ function renderJobs(jobs){const running=jobs.filter(job=>job.state==="running"||
 async function loadJobs(){try{const r=await fetch("/api/jobs");if(!r.ok)throw new Error("Could not load the queue.");
   const jobs=(await r.json()).jobs||[];startReadyBrowserDownloads(jobs);renderJobs(jobs);$("queueError").textContent="";
  }catch(e){$("queueError").textContent=e.message||"Could not load the queue."}}
-$("clearRecent").onclick=async()=>{if(clearHistoryBusy||!window.confirm("Clear recent download history? Downloaded files will not be deleted."))return;
- clearHistoryBusy=true;$("clearRecent").disabled=true;
- try{const r=await fetch("/api/jobs/clear-recent",{method:"POST"}),d=await r.json();
-  if(!r.ok)throw new Error(d.error||"Could not clear recent downloads.");
-  browserDownloadRequests.clear();await loadJobs()
- }catch(e){$("queueError").textContent=e.message||"Could not clear recent downloads."}
- finally{clearHistoryBusy=false;$("clearRecent").disabled=false}};
 loadJobs();setInterval(loadJobs,1000);
 
 // save folder
