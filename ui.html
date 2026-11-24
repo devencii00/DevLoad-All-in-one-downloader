@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DevLoad - All in one downloader</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<style>
+:root{--bg1:#f4f2ff;--bg2:#e3f4fb;--panel:rgba(255,255,255,.82);--raised:rgba(237,235,252,.75);--line:#cfc9f2;--text:#1d1b3a;--sub:#6a6f92;
+--a:#7d5cff;--b:#00a9d8;--accent:#7d5cff;--accent-h:#6a48f0;--on-accent:#fff;--ok:#14a67a;--err:#e0364a;--run:#00a9d8;
+--shadow:0 4px 24px rgba(90,70,200,.08);--r:14px}
+[data-theme=dark]{--bg1:#14112a;--bg2:#080a16;--panel:rgba(28,26,52,.74);--raised:rgba(12,12,28,.6);--line:#46427a;--text:#e8eafa;--sub:#8c92b4;
+--b:#00cdff;--accent:#9a7dff;--accent-h:#b199ff;--ok:#2fd39a;--err:#ff5a6a;--run:#00cdff;--shadow:0 4px 24px rgba(0,0,0,.35)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-size:14px;line-height:1.5;color:var(--text);background:linear-gradient(155deg,var(--bg1),var(--bg2)) fixed;overflow-x:hidden}
+#fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+.top,.page,footer{position:relative;z-index:1}
+button,input{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+
+/* top bar */
+.top{background:var(--panel);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1160px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:36px;height:36px;border-radius:9px;object-fit:contain}
+.brand h1{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
+.brand p{margin:0;font-size:12.5px;color:var(--sub)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--raised)}
+.btn.primary{background:linear-gradient(120deg,var(--a),var(--b));border-color:transparent;color:#fff}
+.btn.primary:hover{filter:brightness(1.08);background:linear-gradient(120deg,var(--a),var(--b))}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* layout */
+.page{max-width:1160px;margin:0 auto;padding:28px 24px 40px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+.card{background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.card+.card{margin-top:20px}
+.card-h{padding:16px 20px;border-bottom:1px solid var(--line)}
+.card-h h2{margin:0;font-size:15px;font-weight:650}
+.card-h p{margin:2px 0 0;font-size:13px;color:var(--sub)}
+.card-b{padding:20px}
+
+/* link input */
+.row{display:flex;gap:10px}
+input[type=text],input:not([type]){flex:1;min-width:0;height:42px;padding:0 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+#url{height:46px}
+#fetch{height:46px;padding:0 24px}
+.hint{display:flex;align-items:center;gap:8px;margin-top:12px;min-height:24px;font-size:13px;color:var(--sub)}
+.platforms{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.platform-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--sub);font-size:12px;font-weight:600;transition:background .15s,border-color .15s,color .15s,transform .15s}
+.platform-icon{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.platform-chip[data-platform="youtube"] .platform-icon path,.platform-chip[data-platform="facebook"] .platform-icon path{fill:currentColor;stroke:none}
+.platform-chip[data-platform="facebook"] .platform-icon{fill:currentColor;stroke:none}
+.platform-chip.active{transform:translateY(-1px)}
+.platform-chip.active[data-platform="facebook"]{background:#1877f2;border-color:#1877f2;color:#fff}
+.platform-chip.active[data-platform="youtube"]{background:#ff0033;border-color:#ff0033;color:#fff}
+.platform-chip.active[data-platform="tiktok"]{background:#111;border-color:#111;color:#fff}
+.platform-chip.active[data-platform="instagram"]{background:linear-gradient(120deg,#833ab4,#e1306c,#f77737);border-color:#d62976;color:#fff}
+.platform-chip.active[data-platform="other"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.tiktok-cyan,.tiktok-pink{opacity:0}
+.platform-chip.active[data-platform="tiktok"] .tiktok-cyan{opacity:1;stroke:#25f4ee}
+.platform-chip.active[data-platform="tiktok"] .tiktok-pink{opacity:1;stroke:#fe2c55}
+
+/* preview */
+.meta{display:flex;gap:16px;padding:20px;border-bottom:1px solid var(--line)}
+.meta img{width:148px;height:96px;object-fit:cover;border-radius:8px;background:var(--raised);flex:none}
+.meta .t{font-weight:650;font-size:15px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta .s{margin-top:6px;font-size:13px;color:var(--sub)}
+.opts{padding:20px;display:grid;gap:20px}
+.field>label,.lbl{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.seg{display:inline-flex;padding:3px;gap:3px;background:var(--raised);border:1px solid var(--line);border-radius:9px}
+.seg button{border:0;background:transparent;color:var(--sub);padding:7px 18px;border-radius:7px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--a);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:7px 14px;border:1px solid var(--line);background:var(--panel);border-radius:8px;font-weight:600;color:var(--sub);cursor:pointer}
+.chips button:hover{border-color:var(--accent);color:var(--text)}
+.chips button.on{border-color:var(--a);background:var(--a);color:#fff}
+.foot{padding:16px 20px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.msg{font-size:13px;color:var(--sub)}.msg.err{color:var(--err)}.msg.ok{color:var(--ok)}
+.notice{margin:0 20px 20px;padding:10px 14px;border-radius:8px;font-size:13px;color:var(--err);background:color-mix(in srgb,var(--err) 9%,var(--panel));border:1px solid color-mix(in srgb,var(--err) 30%,var(--line))}
+.notice:empty{display:none}
+
+/* sidebar */
+.side{position:sticky;top:20px}
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 8px}
+.tab{display:flex;align-items:center;gap:8px;padding:14px 12px;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;background:none;font-weight:600;color:var(--sub);cursor:pointer}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-bottom-color:var(--accent)}
+.count{min-width:20px;padding:0 6px;border-radius:99px;background:var(--raised);font-size:12px;text-align:center;color:var(--sub)}
+.side-b{padding:16px}
+.job-section{display:grid;gap:8px}
+.job-section+.job-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.job-section h3{margin:0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--sub)}
+.jobs{display:grid;gap:10px;max-height:min(34vh,320px);overflow-y:auto}
+.job{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--panel)}
+.job-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.job-main{display:flex;align-items:flex-start;gap:10px;min-width:0;flex:1}
+.job-thumb{width:72px;height:48px;flex:none;object-fit:cover;border-radius:6px;background:var(--raised)}
+.job-title{font-weight:600;font-size:13.5px;line-height:1.35;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.job-state{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--sub)}
+.job-state::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.job-state.running,.job-state.cancelling{color:var(--run)}.job-state.done{color:var(--ok)}.job-state.error,.job-state.cancelled{color:var(--err)}
+.job-controls{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.job-cancel{height:28px;padding:0 9px;border-color:color-mix(in srgb,var(--err) 45%,var(--line));color:var(--err);font-size:11px}
+.job-cancel:hover{border-color:var(--err);background:color-mix(in srgb,var(--err) 8%,var(--panel))}
+.job-progress{height:4px;border-radius:9px;background:var(--raised);margin-top:10px;overflow:hidden}
+.job-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .25s}
+.job.done .job-progress i{background:var(--ok)}.job.error .job-progress i{background:var(--err)}
+.job-detail{margin-top:8px;font-size:12px;color:var(--sub);overflow-wrap:anywhere}
+.job-tag{display:inline-block;margin-right:6px;padding:0 6px;border-radius:5px;background:var(--raised);font-size:11px;font-weight:700;color:var(--sub)}
+.job a{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none}
+.job a:hover{text-decoration:underline}
+.empty{padding:28px 12px;text-align:center;font-size:13px;color:var(--sub);border:1px dashed var(--line);border-radius:9px}
+.empty b{display:block;color:var(--text);margin-bottom:2px}
+.confirm-dialog{width:min(420px,calc(100% - 32px));padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+.confirm-dialog::backdrop{background:rgba(10,12,30,.55);backdrop-filter:blur(3px)}
+.dialog-b{padding:22px}
+.dialog-b h2{margin:0;font-size:16px}
+.dialog-b p{margin:10px 0 0;color:var(--sub);font-size:13px;overflow-wrap:anywhere}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}
+.btn.danger{background:var(--err);border-color:var(--err);color:#fff}
+.btn.danger:hover{filter:brightness(1.08);background:var(--err)}
+.dialog-error{min-height:0;margin-top:10px;color:var(--err);font-size:13px}
+.dialog-error:empty{display:none}
+.folder-row{display:grid;gap:10px}
+.folder-row .row{flex-wrap:wrap}
+#folder{font-size:13px;width:100%;flex:1 1 100%}
+.destination-options{display:grid;gap:8px;margin:0;padding:0;border:0}
+.destination-options legend{padding:0}
+.destination-option{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.destination-option input{margin:4px 0 0;accent-color:var(--accent)}
+.destination-copy{display:grid;gap:2px}
+.destination-copy strong{font-size:13px}
+.destination-copy small{font-size:12px;line-height:1.4;color:var(--sub)}
+.destination-help{font-size:12px}
+.destination-option:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+footer{max-width:1160px;margin:0 auto;padding:0 24px 28px;font-size:12px;color:var(--sub)}
+
+@media(prefers-reduced-motion:reduce){#fx{display:none}}
+@media(max-width:900px){.page{grid-template-columns:minmax(0,1fr)}.side{position:static}.jobs{max-height:320px}}
+@media(max-width:560px){.top-in,.page,footer{padding-left:14px;padding-right:14px}.meta{flex-direction:column}.meta img{width:100%;height:170px}.row{flex-wrap:wrap}#fetch{width:100%}}
+</style></head><body>
+<canvas id="fx"></canvas>
+<header class="top"><div class="top-in">
+  <div class="brand"><img class="logo" src="/assets/devenci.png" alt="">
+    <div><h1>DevLoad</h1><p>All in one video and audio downloader</p></div></div>
+  <button class="btn" id="theme" type="button">Dark mode</button>
+</div></header>
+
+<div class="page">
+<main>
+  <section class="card" aria-labelledby="linkH">
+    <div class="card-h"><h2 id="linkH">Paste a link</h2><p>We detect the platform and list the available qualities.</p></div>
+    <div class="card-b">
+      <div class="row"><input id="url" placeholder="https://" autocomplete="off" aria-label="Video link">
+        <button class="btn primary" id="fetch" type="button">Fetch</button></div>
+      <div class="hint" id="hint">Waiting for a link.</div>
+      <div class="platforms" role="list" aria-label="Supported platforms">
+        <span class="platform-chip" data-platform="tiktok" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="tiktok-cyan" d="M14 4v11a3.5 3.5 0 1 1-3-3.46"/><path class="tiktok-pink" d="M15 5c.8 2.2 2.2 3.4 4 3.8"/><path d="M14 4v11a3.5 3.5 0 1 1-3-3.46M14 4c.8 2.2 2.2 3.4 4 3.8"/></svg>
+          <span>TikTok</span>
+        </span>
+        <span class="platform-chip" data-platform="youtube" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10 9 5 3-5 3z"/></svg>
+          <span>YouTube &amp; Shorts</span>
+        </span>
+        <span class="platform-chip" data-platform="facebook" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7h2.35l.35-2.7H13.5V9.58c0-.78.22-1.31 1.34-1.31h1.43V5.86c-.25-.03-1.1-.11-2.08-.11-2.06 0-3.47 1.26-3.47 3.57v1.99H8.39V14h2.33v7z"/></svg>
+          <span>Facebook &amp; Reels</span>
+        </span>
+        <span class="platform-chip" data-platform="instagram" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.8" r=".7" fill="currentColor" stroke="none"/></svg>
+          <span>Instagram</span>
+        </span>
+        <span class="platform-chip" data-platform="other" role="listitem">
+          <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          <span>Other sites</span>
+        </span>
+      </div>
+    </div>
+    <div class="notice" id="systemNotice"></div>
+  </section>
+
+  <section class="card hidden" id="panel" aria-labelledby="optH">
+    <div class="meta"><img id="thumb" alt=""><div><div class="t" id="title"></div><div class="s" id="sub"></div></div></div>
+    <div class="opts">
+      <div class="field"><span class="lbl" id="optH">Format</span>
+        <div class="seg" id="kind"><button data-k="mp4" class="on" type="button">MP4 video</button><button data-k="mp3" type="button">MP3 audio</button></div></div>
+      <div class="field" id="vopts"><span class="lbl">Resolution</span><div class="chips" id="res"></div></div>
+      <div class="field hidden" id="aopts"><span class="lbl">Audio quality</span>
+        <div class="chips" id="br"><button data-v="128" type="button">128 kbps</button><button data-v="192" class="on" type="button">192 kbps</button><button data-v="320" type="button">320 kbps</button></div></div>
+    </div>
+    <div class="foot"><div class="msg" id="msg"></div><button class="btn primary" id="dl" type="button">Add to queue</button></div>
+  </section>
+</main>
+
+<aside class="card side" aria-label="Queue and settings">
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="queueTab" type="button" role="tab" aria-selected="true" aria-controls="queuePanel">Queue <span class="count" id="queueCount">0</span></button>
+    <button class="tab" id="folderTab" type="button" role="tab" aria-selected="false" aria-controls="folderPanel">Save folder</button>
+  </div>
+  <section class="side-b" id="queuePanel" role="tabpanel" aria-labelledby="queueTab">
+    <section class="job-section" aria-labelledby="activeJobsHeading">
+      <h3 id="activeJobsHeading">Current queue</h3>
+      <div class="jobs" id="activeJobs"><div class="empty"><b>No downloads in the queue</b>Fetch a link and add it here.</div></div>
+    </section>
+    <section class="job-section" aria-labelledby="recentJobsHeading">
+      <h3 id="recentJobsHeading">Recent downloads</h3>
+      <div class="jobs" id="recent"><div class="empty"><b>No recent downloads</b>Completed, failed, and cancelled downloads will appear here.</div></div>
+    </section>
+    <div class="msg err" id="queueError"></div>
+  </section>
+  <section class="side-b hidden" id="folderPanel" role="tabpanel" aria-labelledby="folderTab">
+    <div class="folder-row">
+      <fieldset class="destination-options" id="destinationOptions" disabled>
+        <legend class="lbl">Download destination</legend>
+        <label class="destination-option" for="browserDestination">
+          <input id="browserDestination" name="downloadMode" type="radio" value="browser" checked>
+          <span class="destination-copy"><strong>Browser download</strong><small>Send completed downloads to your browser's download manager and use its save location and progress controls.</small></span>
+        </label>
+        <label class="destination-option" for="folderDestination">
+          <input id="folderDestination" name="downloadMode" type="radio" value="folder">
+          <span class="destination-copy"><strong>App save folder</strong><small>Save directly to the folder selected below, as DevLoad does now.</small></span>
+        </label>
+      </fieldset>
+      <div class="msg destination-help" id="modeHelp">Browser downloads use the browser's download manager. Enable "Ask where to save each file" in browser settings to choose a folder.</div>
+      <div id="appFolderSettings" class="folder-row hidden">
+        <label class="lbl" for="folder">App save folder</label>
+        <input id="folder" spellcheck="false" aria-label="App save folder">
+        <div class="row"><button class="btn" id="browse" type="button">Change folder</button><button class="btn" id="openf" type="button">Open folder</button></div>
+        <div class="msg" id="fmsg">Used when App save folder is selected.</div>
+      </div>
+    </div>
+  </section>
+</aside>
+</div>
+<footer>By devenci.cd, 2026. Only download content you own or have permission to save.</footer>
+
+<dialog class="confirm-dialog" id="cancelDialog" aria-labelledby="cancelHeading">
+  <div class="dialog-b">
+    <h2 id="cancelHeading">Cancel this download?</h2>
+    <p>Are you sure you want to cancel <strong id="cancelTitle"></strong>?</p>
+    <div class="dialog-error" id="cancelError" role="alert"></div>
+    <div class="dialog-actions">
+      <button class="btn" id="cancelKeep" type="button">Keep download</button>
+      <button class="btn danger" id="confirmCancel" type="button">Cancel download</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+let kind="mp4",height=null,label=null,bitrate=192,fetching=false,queueAdding=false,thumbnail="",fetchedUrl="",selectedDownloadMode="browser",destinationUpdating=false;
+const browserDownloadRequests=new Set();
+const J=b=>({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+
+// theme
+const root=document.documentElement;
+function setTheme(t){root.dataset.theme=t;$("theme").textContent=t==="dark"?"Light mode":"Dark mode";try{localStorage.setItem("dv-theme",t)}catch(e){}}
+let saved="light";try{saved=localStorage.getItem("dv-theme")||"light"}catch(e){}
+setTheme(saved);
+$("theme").onclick=()=>setTheme(root.dataset.theme==="dark"?"light":"dark");
+
+// background cubes + particles
+const cv=$("fx"),cx=cv.getContext("2d");let W,H,P=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener("resize",resize);resize();
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function mk(y){const cube=Math.random()<.55,s=cube?rnd(10,30):rnd(2,4);
+ return{cube,s,x:rnd(0,W),y:y?rnd(0,H):H+s,vx:rnd(-6,6),vy:-rnd(8,24),r:rnd(0,6.28),vr:rnd(-.4,.4),h:rnd(0,1),ph:rnd(0,6.28)}}
+for(let i=0;i<(innerWidth<600?16:34);i++)P.push(mk(true));
+let last=performance.now(),t=0;
+function frame(n){const dt=Math.min((n-last)/1000,.05);last=n;t+=dt;cx.clearRect(0,0,W,H);
+ const light=root.dataset.theme==="light";
+ P.forEach((p,i)=>{p.y+=p.vy*dt;p.x+=(p.vx+Math.sin(t*.6+p.ph)*4)*dt;p.r+=p.vr*dt;
+  if(p.y<-40)return P[i]=mk(false);
+  const c=`hsl(${255-p.h*75},95%,${light?60:68}%)`;
+  cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.strokeStyle=c;cx.fillStyle=c;
+  if(p.cube){cx.globalAlpha=.55;cx.lineWidth=1.2;cx.strokeRect(-p.s/2,-p.s/2,p.s,p.s);
+   cx.globalAlpha=.12;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s);
+   cx.globalAlpha=.35;cx.strokeRect(-p.s*.25,-p.s*.25,p.s*.5,p.s*.5)}
+  else{cx.globalAlpha=.55;cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
+  cx.restore()});
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+// sidebar tabs
+function setSidePanel(p){const q=p==="queue";
+ $("queuePanel").classList.toggle("hidden",!q);$("folderPanel").classList.toggle("hidden",q);
+ $("queueTab").classList.toggle("on",q);$("folderTab").classList.toggle("on",!q);
+ $("queueTab").setAttribute("aria-selected",String(q));$("folderTab").setAttribute("aria-selected",String(!q))}
+$("queueTab").onclick=()=>setSidePanel("queue");$("folderTab").onclick=()=>setSidePanel("folder");
+["queueTab","folderTab"].forEach((id,i,a)=>$(id).onkeydown=e=>{
+ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();
+ const n=$(a[(i+(e.key==="ArrowRight"?1:-1)+a.length)%a.length]);n.focus();n.click()});
+
+// platform detection
+const PL=[["TikTok",/tiktok\.com/i],["YouTube Shorts",/youtube\.com\/shorts\//i],["YouTube",/(youtube\.com|youtu\.be)/i],
+ ["Facebook",/(facebook\.com|fb\.watch|fb\.com)/i],["Instagram",/(instagram\.com|instagr\.am)/i]];
+const detect=u=>(PL.find(p=>p[1].test(u))||["Other"])[0];
+$("url").addEventListener("input",()=>{const u=$("url").value.trim();
+ if(u!==fetchedUrl){fetchedUrl="";thumbnail="";$("panel").classList.add("hidden")}
+ if(!u){setDetectedPlatform("");$("hint").textContent="Waiting for a link."}
+ else if(/^https?:\/\//i.test(u)){setDetectedPlatform(detect(u));$("hint").textContent="Platform highlighted below. Select Fetch to continue."}
+ else{setDetectedPlatform("");$("hint").textContent="Links must start with http:// or https://"}});
+function setDetectedPlatform(platform){const selected=platform==="YouTube"||platform==="YouTube Shorts"?"youtube":
+ platform==="Facebook"?"facebook":platform==="TikTok"?"tiktok":platform==="Instagram"?"instagram":platform?"other":"";
+ document.querySelectorAll(".platform-chip").forEach(chip=>{const active=chip.dataset.platform===selected;
+  chip.classList.toggle("active",active);if(active)chip.setAttribute("aria-current","true");else chip.removeAttribute("aria-current")})}
+$("url").addEventListener("keydown",e=>{if(e.key==="Enter")$("fetch").click()});
+
+// options
+function pick(box,btn,fn){[...box.children].forEach(b=>b.classList.toggle("on",b===btn));fn(btn)}
+$("kind").onclick=e=>{const b=e.target.closest("button");if(!b)return;pick($("kind"),b,x=>{kind=x.dataset.k});
+ $("vopts").classList.toggle("hidden",kind==="mp3");$("aopts").classList.toggle("hidden",kind==="mp4")};
+$("br").onclick=e=>{const b=e.target.closest("button");if(b)pick($("br"),b,x=>{bitrate=+x.dataset.v})};
+$("res").onclick=e=>{const b=e.target.closest("button");if(b)pick($("res"),b,x=>{height=x.dataset.h?+x.dataset.h:null;label=x.dataset.p?+x.dataset.p:null})};
+function msg(t,c=""){$("msg").className="msg "+c;$("msg").textContent=t}
+const fmt=s=>s?`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,"0")}`:"";
+// fetch info
+$("fetch").onclick=async()=>{const url=$("url").value.trim();if(!url||fetching)return;
+ fetching=true;fetchedUrl="";thumbnail="";$("fetch").disabled=true;$("fetch").textContent="Reading...";$("panel").classList.add("hidden");
+ try{const r=await fetch("/api/info",J({url}));const d=await r.json();if(!r.ok)throw new Error(d.error);
+  if($("url").value.trim()!==url)return;
+  setDetectedPlatform(d.platform);$("hint").textContent="Platform confirmed. Choose a format and quality.";
+  thumbnail=d.thumb||"";fetchedUrl=url;$("thumb").src=thumbnail;$("title").textContent=d.title;
+  $("sub").textContent=[d.uploader,fmt(d.duration)].filter(Boolean).join("  |  ");
+  const best=d.options.length?d.options[0].p:null;
+  $("res").innerHTML=`<button data-h="" data-p="${best||""}" class="on" type="button">Best${best?" ("+best+"p)":""}</button>`+
+   d.options.map(o=>`<button data-h="${o.h}" data-p="${o.p}" type="button">${o.p}p</button>`).join("");
+  height=null;label=best;msg("");$("panel").classList.remove("hidden");
+ }catch(e){const h=$("hint");h.textContent=e.message||"Could not read that link.";h.style.color="var(--err)";setTimeout(()=>h.style.color="",4000)}
+ finally{fetching=false;$("fetch").disabled=false;$("fetch").textContent="Fetch"}};
+
+// add to queue
+$("dl").onclick=async()=>{if(queueAdding||destinationUpdating)return;queueAdding=true;$("dl").disabled=true;
+ try{msg("Adding to queue...");
+  const r=await fetch("/api/download",J({url:$("url").value.trim(),title:$("title").textContent,thumb:thumbnail,kind,height,label,bitrate}));
+  const d=await r.json();if(!r.ok)throw new Error(d.error);
+  msg("Added to queue.","ok");setSidePanel("queue");await loadJobs();
+ }catch(e){msg(e.message||"Could not add this download to the queue.","err")}
+ queueAdding=false;$("dl").disabled=destinationUpdating};
+
+// queue
+let cancelTarget=null;
+function openCancel(job){cancelTarget=job.id;$("cancelTitle").textContent=job.title||"this download";$("cancelError").textContent="";$("cancelDialog").showModal()}
+$("cancelKeep").onclick=()=>$("cancelDialog").close();
+$("cancelDialog").addEventListener("click",e=>{if(e.target===$("cancelDialog"))$("cancelDialog").close()});
+$("cancelDialog").addEventListener("close",()=>{cancelTarget=null;$("cancelError").textContent=""});
+$("confirmCancel").onclick=async()=>{if(!cancelTarget)return;const id=cancelTarget;$("confirmCancel").disabled=true;$("cancelError").textContent="";
+ try{const r=await fetch("/api/jobs/"+encodeURIComponent(id)+"/cancel",{method:"POST"});const d=await r.json();
+  if(!r.ok)throw new Error(d.error||"Could not cancel this download.");$("cancelDialog").close();await loadJobs()
+ }catch(e){$("cancelError").textContent=e.message||"Could not cancel this download."}
+ finally{$("confirmCancel").disabled=false}};
+function startBrowserDownload(job){if(browserDownloadRequests.has(job.id)||job.browser_download_requested)return;
+ browserDownloadRequests.add(job.id);
+ const a=document.createElement("a");a.href="/api/file/"+encodeURIComponent(job.id);a.textContent="Save a copy via browser";
+ document.body.append(a);a.click();a.remove();
+ fetch("/api/jobs/"+encodeURIComponent(job.id)+"/browser-download-requested",{method:"POST"})
+  .then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Could not record the browser download request.")})
+  .catch(e=>{$("queueError").textContent=(e.message||"Could not record the browser download request.")+" Use Save a copy via browser to retry."})}
+function startReadyBrowserDownloads(jobs){jobs.forEach(job=>{
+ if(job.state==="done"&&job.destination==="browser")startBrowserDownload(job)})}
+function renderJob(job){const labels={queued:"Queued",running:"Downloading",cancelling:"Cancelling",done:"Completed",error:"Failed",cancelled:"Cancelled"};
+ const row=document.createElement("div");row.className="job "+job.state;
+  const head=document.createElement("div");head.className="job-head";
+  const main=document.createElement("div"),title=document.createElement("div"),controls=document.createElement("div"),state=document.createElement("div");
+  main.className="job-main";
+  if(job.thumb){const thumb=document.createElement("img");thumb.className="job-thumb";thumb.alt="";thumb.loading="lazy";thumb.src=job.thumb;
+   thumb.addEventListener("error",()=>thumb.remove(),{once:true});main.append(thumb)}
+  title.className="job-title";title.textContent=job.title||"Download";
+  state.className="job-state "+job.state;state.textContent=labels[job.state]||job.state;
+  controls.className="job-controls";controls.append(state);
+  if(job.state==="queued"||job.state==="running"){const cancel=document.createElement("button");cancel.className="btn job-cancel";cancel.type="button";
+   cancel.textContent="Cancel";cancel.setAttribute("aria-label","Cancel download "+(job.title||""));cancel.addEventListener("click",()=>openCancel(job));controls.append(cancel)}
+  main.append(title);head.append(main,controls);row.append(head);
+  const bar=document.createElement("div"),fill=document.createElement("i");
+  bar.className="job-progress";bar.setAttribute("role","progressbar");bar.setAttribute("aria-valuemin","0");bar.setAttribute("aria-valuemax","100");
+  const pct=job.state==="done"?100:Math.max(0,Math.min(100,Number(job.pct)||0));
+  bar.setAttribute("aria-valuenow",String(Math.round(pct)));fill.style.width=pct+"%";bar.append(fill);row.append(bar);
+  const d=document.createElement("div");d.className="job-detail";
+  const tag=document.createElement("span");tag.className="job-tag";tag.textContent=job.format||"";d.append(tag);
+  d.append(job.state==="queued"?"Waiting for earlier downloads":
+   job.state==="running"?`${job.stage||"Downloading"}, ${Math.round(pct)}%${job.note?", "+job.note:""}`:
+   job.state==="cancelling"?"Cancellation requested...":
+   job.state==="cancelled"?"Cancelled by you":
+   job.state==="done"&&job.destination==="browser"?(job.browser_download_requested||browserDownloadRequests.has(job.id)?"Browser download requested; check browser downloads":"Starting browser download..."):
+   job.state==="done"?`Saved as ${job.name||""}`:job.error||"Download failed");
+  row.append(d);
+  if(job.state==="done"){const a=document.createElement("a");a.href="/api/file/"+encodeURIComponent(job.id);a.textContent="Save a copy via browser";row.append(a)}
+  return row}
+function renderList(list,jobs,emptyHtml){list.replaceChildren();
+ if(!jobs.length){list.innerHTML=emptyHtml;return}
+ jobs.forEach(job=>list.append(renderJob(job)))}
+function renderJobs(jobs){const running=jobs.filter(job=>job.state==="running"||job.state==="cancelling");
+ const queued=jobs.filter(job=>job.state==="queued").reverse(),active=[...running,...queued];
+ const recent=jobs.filter(job=>job.state==="done"||job.state==="error"||job.state==="cancelled");
+ $("queueCount").textContent=String(active.length);
+ renderList($("activeJobs"),active,'<div class="empty"><b>No downloads in the queue</b>Fetch a link and add it here.</div>');
+ renderList($("recent"),recent,'<div class="empty"><b>No recent downloads</b>Completed, failed, and cancelled downloads will appear here.</div>')}
+async function loadJobs(){try{const r=await fetch("/api/jobs");if(!r.ok)throw new Error("Could not load the queue.");
+  const jobs=(await r.json()).jobs||[];startReadyBrowserDownloads(jobs);renderJobs(jobs);$("queueError").textContent="";
+ }catch(e){$("queueError").textContent=e.message||"Could not load the queue."}}
+loadJobs();setInterval(loadJobs,1000);
+
+// save folder
+function showDownloadMode(mode){selectedDownloadMode=mode;$("browserDestination").checked=mode==="browser";$("folderDestination").checked=mode==="folder";
+ $("appFolderSettings").classList.toggle("hidden",mode==="browser");
+ $("modeHelp").textContent=mode==="browser"?
+  "Completed downloads are sent to the browser's download manager. Enable \"Ask where to save each file\" in browser settings to choose a folder.":
+  "Downloads are saved directly to the app folder selected below. This choice applies to new downloads."}
+async function setDownloadMode(mode){if(destinationUpdating)return;if(queueAdding){showDownloadMode(selectedDownloadMode);return}destinationUpdating=true;$("destinationOptions").disabled=true;$("dl").disabled=true;
+ $("fmsg").className="msg";$("fmsg").textContent="Updating download destination...";
+ try{const r=await fetch("/api/settings",J({download_mode:mode})),d=await r.json();if(!r.ok)throw new Error(d.error||"Could not update the download destination.");
+  showDownloadMode(d.download_mode);$("fmsg").className="msg ok";$("fmsg").textContent="Destination updated. This applies to new downloads."
+ }catch(e){showDownloadMode(selectedDownloadMode);$("fmsg").className="msg err";$("fmsg").textContent=e.message||"Could not update the download destination."}
+ finally{destinationUpdating=false;$("destinationOptions").disabled=false;$("dl").disabled=queueAdding}}
+$("browserDestination").addEventListener("change",()=>{if($("browserDestination").checked)setDownloadMode("browser")});
+$("folderDestination").addEventListener("change",()=>{if($("folderDestination").checked)setDownloadMode("folder")});
+async function setFolder(path){const r=await fetch("/api/folder",J({path}));const d=await r.json();
+ if(r.ok){$("folder").value=d.folder;$("fmsg").className="msg ok";$("fmsg").textContent=selectedDownloadMode==="folder"?"App save folder updated.":"App save folder updated. Select App save folder mode to use it."}
+ else{$("fmsg").className="msg err";$("fmsg").textContent=d.error}}
+$("folder").addEventListener("change",()=>setFolder($("folder").value));
+$("browse").onclick=async()=>{$("browse").disabled=true;$("fmsg").className="msg";$("fmsg").textContent="Choose a folder in the window that opened...";
+ try{const d=await (await fetch("/api/browse",J({}))).json();$("folder").value=d.folder;$("fmsg").textContent=selectedDownloadMode==="folder"?"App save folder updated.":"App save folder updated. Select App save folder mode to use it."}catch(e){$("fmsg").className="msg err";$("fmsg").textContent=e.message||"Could not choose a folder."}
+ $("browse").disabled=false};
+$("openf").onclick=()=>fetch("/api/open",J({}));
+
+fetch("/api/status").then(r=>r.json()).then(s=>{$("folder").value=s.folder;showDownloadMode(s.download_mode==="folder"?"folder":"browser");$("destinationOptions").disabled=false;$("dl").disabled=destinationUpdating;
+ if(!s.ffmpeg)$("systemNotice").textContent="ffmpeg is missing, so MP3 and HD merging are off. Start the app from the launcher once to install it, or run: pip install imageio-ffmpeg"});
+</script></body></html>

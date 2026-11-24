@@ -1,0 +1,26 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# DevLoad runtime data
+/Downloads/
+/assets/*
+!/assets/devenci.png
+!/assets/devenci.ico
+/config.json
+/cookies.txt
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Editor settings
+.vscode/
+.idea/
